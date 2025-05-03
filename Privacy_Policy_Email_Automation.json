@@ -1,0 +1,380 @@
+{
+  "name": "Privacy Policy Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        -300
+      ],
+      "id": "deb85c9e-25fb-4395-8590-9e9de4ebaba4",
+      "name": "Schedule Trigger",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "fileSelector": "={{ $env[\"LATEST_POLICY_FILE\"] }}",
+        "options": {
+          "dataPropertyName": "oldDocument"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        -300
+      ],
+      "id": "efbdee3a-48bc-454c-aa64-0eddf336d317",
+      "name": "Load Previous Privacy Policy",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const dmp = require('diff-match-patch');\nconst diff = new dmp();\n\nconst oldText = $('Load Old Privacy Policy').first().json.oldPrivacyPolicy[0].data ?? ''\n\nconst newText = $('Read Privacy Policy from URL').first().json.data\n\nconst diffs = diff.diff_main(oldText, newText);\ndiff.diff_cleanupSemantic(diffs);\n\nconst summary = diffs\n  .filter(([type, text]) => type !== 0) // skip equal\n  .map(([type, text]) => (type === -1 ? `[- ${text} -]` : `[+ ${text} +]`))\n  .join('\\n');\n\nreturn [{ json: { diffSummary: summary } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        -40
+      ],
+      "id": "2fbeff6a-4853-4744-9b24-fb2d23ca4d73",
+      "name": "Create a diff of the policies"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $env[\"LATEST_POLICY_FILE\"] }}",
+        "dataPropertyName": "=privacy",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        40,
+        -300
+      ],
+      "id": "c70439b7-a6eb-4850-853d-0bfab6b8a396",
+      "name": "Save New Privacy Policy"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "=oldDocument",
+        "destinationKey": "oldPrivacyPolicy",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        -400
+      ],
+      "id": "381a15ec-d2f1-40f2-be05-d3e4e8a2b930",
+      "name": "Load Old Privacy Policy",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -520,
+        180
+      ],
+      "id": "fef707fa-ec65-4f16-83bf-6514ec042aff",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "QRepxPGd5rRRR3QZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Read Privacy Policy').item.json.data }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "validDate",
+              "description": "The effective valid date for this privacy policy document"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        -40
+      ],
+      "id": "26105097-ddde-481d-bcd7-873ad42b9f2c",
+      "name": "New validity date"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d3ec3527-d3e5-4505-8c89-d3e8d3dc3e89",
+              "leftValue": "={{ $json.diffSummary }}",
+              "rightValue": null,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -980,
+        -40
+      ],
+      "id": "ba1f885e-8e95-4a96-95c3-78095a42625b",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -980,
+        180
+      ],
+      "id": "93993d9c-85e0-484c-b57c-01500e06de99",
+      "name": "No Changes"
+    },
+    {
+      "parameters": {
+        "text": "=New Privacy Policy: {{ $('Create a diff of the policies').item.json.fullNewPolicy }}\nOld Privacy Policy: \n{{ $('Load Old Privacy Policy').item.json.oldPrivacyPolicy }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "difference",
+              "description": "=List and sum-up the changes between the old version of the privacy policy and the new version.\nRules: \n- Do not do a generic summary of the privacy policy.\n- Only list meaningful changes."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\nOnly extract relevant information from the text.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        -40
+      ],
+      "id": "119cd458-2749-405c-b812-81ab45197de1",
+      "name": "Extract Changes"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env[\"POLICY_URL\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        -300
+      ],
+      "id": "bfa7ff98-c4a5-4eb8-ab50-ca733fc488a2",
+      "name": "Read Privacy Policy from URL",
+      "retryOnFail": false,
+      "alwaysOutputData": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "binaryPropertyName": "=privacy",
+        "options": {
+          "fileName": "={{ $env[\"LATEST_POLICY_FILE\"] }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -200,
+        -300
+      ],
+      "id": "9c28f365-140e-477e-9cd8-a76aa7221ae2",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Load Previous Privacy Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Previous Privacy Policy": {
+      "main": [
+        [
+          {
+            "node": "Load Old Privacy Policy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Create a diff of the policies": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save New Privacy Policy": {
+      "main": [
+        [
+          {
+            "node": "Create a diff of the policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Old Privacy Policy": {
+      "main": [
+        [
+          {
+            "node": "Read Privacy Policy from URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "New validity date",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Extract Changes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New validity date": {
+      "main": [
+        [
+          {
+            "node": "Extract Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "New validity date",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Changes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Privacy Policy from URL": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Save New Privacy Policy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d298a20b-fbf7-416a-ba92-9b51c71f30d0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "36869f14530315c414f8ada486e9b84dad3fd46291e371985b3dd5eb1e82ece2"
+  },
+  "id": "CWcoCOI5UIvZomAA",
+  "tags": []
+}
