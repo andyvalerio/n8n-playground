@@ -1,0 +1,506 @@
+{
+  "name": "Watering scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "5DayForecast",
+        "cityName": "gothenburg,se"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -80
+      ],
+      "id": "c320bd41-4c43-439e-b643-7bc162092845",
+      "name": "Forecast next 5 days",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "TH1N8YV8kxOs51jN",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -520,
+        -80
+      ],
+      "id": "019e9fde-0fc0-483a-b35a-9c61d59efa9e",
+      "name": "Once a Day"
+    },
+    {
+      "parameters": {
+        "cityName": "gothenburg,se"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        -80
+      ],
+      "id": "539f9d85-3b80-47ae-a801-9e0d5cbb9058",
+      "name": "Current Weather",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "TH1N8YV8kxOs51jN",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const forecastList = $input.first().json.list || [];\nconst currentWeather = $('Current Weather').first().json;\n\nconst dayMap = {};\n\n// Step 0: Add current weather as today\nconst currentDate = new Date(currentWeather.dt * 1000).toISOString().split(\"T\")[0];\nconst currentIsRainy = currentWeather.weather?.[0]?.id < 700;\ndayMap[currentDate] = {\n  isDry: !currentIsRainy,\n};\nconsole.log(currentDate)\n\n// Step 1: Group 3-hour forecasts by date\nfor (const entry of forecastList) {\n  const dateTime = entry.dt_txt;\n  const date = dateTime.split(\" \")[0];\n\n  const weather = entry.weather?.[0];\n  const isRainy = weather && weather.id < 700;\n\n  // If the date is already in the map (e.g., current date), update only if needed\n  if (!dayMap[date]) {\n    dayMap[date] = { isDry: true };\n  }\n\n  if (isRainy) {\n    dayMap[date].isDry = false;\n  }\n}\n\n// Step 2: Convert to sorted array\nconst days = Object.entries(dayMap)\n  .map(([date, data]) => ({\n    date,\n    isDry: data.isDry,\n  }))\n  .sort((a, b) => a.date.localeCompare(b.date));\n\nreturn [{ json: { days } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        -80
+      ],
+      "id": "752fe2fb-a698-41f9-8194-5083ee8259df",
+      "name": "Rainy Days"
+    },
+    {
+      "parameters": {
+        "jsCode": "const days = $input.first().json.days;\n\nlet wateringDay = null;\n\nfor (let i = 0; i < days.length - 1; i++) {\n  if (days[i].isDry && days[i + 1].isDry) {\n    wateringDay = days[i + 1].date;\n    break;\n  }\n}\n\nreturn [{ json: { wateringDay } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        -80
+      ],
+      "id": "5ffd50ff-243b-4dab-b5e3-efbc8fee4fd4",
+      "name": "Next Watering Day"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "66762ca4849559edaae97f6936c88f011597d1e224b0f21d2766e4bf9fdfc90e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Pupicci togethericci"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        -80
+      ],
+      "id": "914513d0-2a43-41f0-bc27-e6ff2a742a45",
+      "name": "Get All Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Epzw8PaLwPHIvl27",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -80
+      ],
+      "id": "aca4d581-1bc4-4950-a464-ecf8e81143da",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const events = $input.first().json[''] || [];\n\nlet existingEvent = null;\n\nfor (const event of events) {\n  if (event.summary === \"Water the plants\") {\n    existingEvent = event;\n    break;\n  }\n}\n\nreturn [{ json: { existingEvent } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        -80
+      ],
+      "id": "74d4e7b7-0dc2-449c-a995-e02616bd2d37",
+      "name": "Find existing watering event"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4c15c274-12fa-4346-922f-922210fa7ef5",
+              "leftValue": "={{ $('Next Watering Day').item.json.wateringDay }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1220,
+        -80
+      ],
+      "id": "e96e6a42-0129-4d97-b822-8cfd6b0f46ee",
+      "name": "Candidate Watering Day Exists"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "35c279b3-e6b8-4db6-a3a7-e69a34a747b6",
+              "leftValue": "={{ $json.existingEvent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1480,
+        80
+      ],
+      "id": "9a93897a-6253-47a2-bb04-9281e515b3ea",
+      "name": "Existing Event Exists"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "66762ca4849559edaae97f6936c88f011597d1e224b0f21d2766e4bf9fdfc90e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Pupicci togethericci"
+        },
+        "eventId": "={{ $json.existingEvent.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1760,
+        80
+      ],
+      "id": "21ace9fb-4a77-4c25-8583-f6da687d2ad0",
+      "name": "Remove Existing Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Epzw8PaLwPHIvl27",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "66762ca4849559edaae97f6936c88f011597d1e224b0f21d2766e4bf9fdfc90e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Pupicci togethericci"
+        },
+        "start": "={{ $('Next Watering Day').item.json.wateringDay }}",
+        "end": "={{ new Date(new Date($('Next Watering Day').item.json.wateringDay).setDate(new Date($('Next Watering Day').item.json.wateringDay).getDate() + 1)).toISOString().split(\"T\")[0] }}",
+        "additionalFields": {
+          "allday": "yes",
+          "summary": "Water the plants"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        2000,
+        -300
+      ],
+      "id": "08c133bc-ace4-4ee1-9e49-840c49cc74d9",
+      "name": "Create Watering Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Epzw8PaLwPHIvl27",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "039bffa8-cce4-410f-ba9f-1836e2ff0798",
+              "leftValue": "={{ $('Find existing watering event').item.json.existingEvent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1480,
+        -200
+      ],
+      "id": "07ed823a-0a1a-4491-9300-9c69c5ff46d3",
+      "name": "Event Does Not Exist"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "66762ca4849559edaae97f6936c88f011597d1e224b0f21d2766e4bf9fdfc90e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Pupicci togethericci"
+        },
+        "eventId": "={{ $json.existingEvent.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1780,
+        -120
+      ],
+      "id": "27f0ce9f-b194-4213-ab8c-e19683de3661",
+      "name": "Remove Existing Event Wrong Date",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Epzw8PaLwPHIvl27",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        280
+      ],
+      "id": "22b1e135-cbe0-46a2-a4f9-953a30af36cf",
+      "name": "All Good"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Once a Day": {
+      "main": [
+        [
+          {
+            "node": "Current Weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forecast next 5 days": {
+      "main": [
+        [
+          {
+            "node": "Rainy Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current Weather": {
+      "main": [
+        [
+          {
+            "node": "Forecast next 5 days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rainy Days": {
+      "main": [
+        [
+          {
+            "node": "Next Watering Day",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Next Watering Day": {
+      "main": [
+        [
+          {
+            "node": "Get All Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Events": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Find existing watering event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find existing watering event": {
+      "main": [
+        [
+          {
+            "node": "Candidate Watering Day Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidate Watering Day Exists": {
+      "main": [
+        [
+          {
+            "node": "Event Does Not Exist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Existing Event Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing Event Exists": {
+      "main": [
+        [
+          {
+            "node": "Remove Existing Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "All Good",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Does Not Exist": {
+      "main": [
+        [
+          {
+            "node": "Create Watering Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Remove Existing Event Wrong Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Existing Event Wrong Date": {
+      "main": [
+        [
+          {
+            "node": "Create Watering Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "11415d8c-63fa-4f4f-ad4e-161cad6680d6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "36869f14530315c414f8ada486e9b84dad3fd46291e371985b3dd5eb1e82ece2"
+  },
+  "id": "iwVbPCJARkvJ4NQn",
+  "tags": []
+}
