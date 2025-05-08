@@ -9,34 +9,17 @@
       "type": "n8n-nodes-base.openWeatherMap",
       "typeVersion": 1,
       "position": [
-        -60,
-        -80
+        -2060,
+        220
       ],
-      "id": "c320bd41-4c43-439e-b643-7bc162092845",
+      "id": "3dd51219-2db4-403b-ae87-b9944283f4cb",
       "name": "Forecast next 5 days",
       "credentials": {
         "openWeatherMapApi": {
-          "id": "TH1N8YV8kxOs51jN",
+          "id": "qZ91I0R779H3dzxI",
           "name": "OpenWeatherMap account"
         }
       }
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {}
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        -520,
-        -80
-      ],
-      "id": "019e9fde-0fc0-483a-b35a-9c61d59efa9e",
-      "name": "Once a Day"
     },
     {
       "parameters": {
@@ -45,14 +28,14 @@
       "type": "n8n-nodes-base.openWeatherMap",
       "typeVersion": 1,
       "position": [
-        -280,
-        -80
+        -2280,
+        220
       ],
-      "id": "539f9d85-3b80-47ae-a801-9e0d5cbb9058",
+      "id": "2f28b612-38bd-42d7-9ccd-01df8bcc11c6",
       "name": "Current Weather",
       "credentials": {
         "openWeatherMapApi": {
-          "id": "TH1N8YV8kxOs51jN",
+          "id": "qZ91I0R779H3dzxI",
           "name": "OpenWeatherMap account"
         }
       }
@@ -64,10 +47,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        140,
-        -80
+        -1860,
+        220
       ],
-      "id": "752fe2fb-a698-41f9-8194-5083ee8259df",
+      "id": "b6886e70-4e65-4bef-a825-9b524b7a4120",
       "name": "Rainy Days"
     },
     {
@@ -77,10 +60,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        360,
-        -80
+        -1640,
+        220
       ],
-      "id": "5ffd50ff-243b-4dab-b5e3-efbc8fee4fd4",
+      "id": "74acdab8-6125-402c-8157-58e9097d475f",
       "name": "Next Watering Day"
     },
     {
@@ -98,14 +81,14 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        580,
-        -80
+        -1420,
+        220
       ],
-      "id": "914513d0-2a43-41f0-bc27-e6ff2a742a45",
+      "id": "61d38894-cb16-4686-9bd0-5a0744c9b19f",
       "name": "Get All Events",
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "Epzw8PaLwPHIvl27",
+          "id": "Vd7Vo8KI0148SrnK",
           "name": "Google Calendar account"
         }
       }
@@ -119,10 +102,10 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        800,
-        -80
+        -1200,
+        220
       ],
-      "id": "aca4d581-1bc4-4950-a464-ecf8e81143da",
+      "id": "f53275ce-6ec2-4216-a1fd-7529b5cb6c45",
       "name": "Aggregate"
     },
     {
@@ -132,10 +115,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        -80
+        -1000,
+        220
       ],
-      "id": "74d4e7b7-0dc2-449c-a995-e02616bd2d37",
+      "id": "61cb0d44-2da0-4803-bcba-1880fa62c8fb",
       "name": "Find existing watering event"
     },
     {
@@ -166,10 +149,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1220,
-        -80
+        -780,
+        220
       ],
-      "id": "e96e6a42-0129-4d97-b822-8cfd6b0f46ee",
+      "id": "f971e3cf-9ec8-4740-bb0a-8ed961fcfe50",
       "name": "Candidate Watering Day Exists"
     },
     {
@@ -200,10 +183,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1480,
-        80
+        -520,
+        380
       ],
-      "id": "9a93897a-6253-47a2-bb04-9281e515b3ea",
+      "id": "712eb284-fafe-47ef-b423-71bf1c4c57ca",
       "name": "Existing Event Exists"
     },
     {
@@ -221,14 +204,14 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        1760,
-        80
+        -240,
+        380
       ],
-      "id": "21ace9fb-4a77-4c25-8583-f6da687d2ad0",
+      "id": "f91f5ab2-41e8-47be-9798-2659ea7ca40f",
       "name": "Remove Existing Event",
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "Epzw8PaLwPHIvl27",
+          "id": "Vd7Vo8KI0148SrnK",
           "name": "Google Calendar account"
         }
       }
@@ -251,14 +234,14 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        2000,
-        -300
+        0,
+        0
       ],
-      "id": "08c133bc-ace4-4ee1-9e49-840c49cc74d9",
+      "id": "5a8a9df6-9f3d-448d-bac9-cc2fc4f684e4",
       "name": "Create Watering Event",
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "Epzw8PaLwPHIvl27",
+          "id": "Vd7Vo8KI0148SrnK",
           "name": "Google Calendar account"
         }
       }
@@ -291,10 +274,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1480,
-        -200
+        -520,
+        100
       ],
-      "id": "07ed823a-0a1a-4491-9300-9c69c5ff46d3",
+      "id": "feeed55e-fcb6-4c11-99f8-c018b905f4b9",
       "name": "Event Does Not Exist"
     },
     {
@@ -312,14 +295,14 @@
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.3,
       "position": [
-        1780,
-        -120
+        -220,
+        180
       ],
-      "id": "27f0ce9f-b194-4213-ab8c-e19683de3661",
+      "id": "5ebde099-fbdb-44ca-abbd-5a4b980f7b2f",
       "name": "Remove Existing Event Wrong Date",
       "credentials": {
         "googleCalendarOAuth2Api": {
-          "id": "Epzw8PaLwPHIvl27",
+          "id": "Vd7Vo8KI0148SrnK",
           "name": "Google Calendar account"
         }
       }
@@ -329,26 +312,35 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1760,
-        280
+        -240,
+        580
       ],
-      "id": "22b1e135-cbe0-46a2-a4f9-953a30af36cf",
+      "id": "4ad90f30-9f67-4944-ba76-972235a821d4",
       "name": "All Good"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2520,
+        220
+      ],
+      "id": "e7cb9334-96e1-4e34-b70f-dfd5c8ed164f",
+      "name": "every 3 hours"
     }
   ],
   "pinData": {},
   "connections": {
-    "Once a Day": {
-      "main": [
-        [
-          {
-            "node": "Current Weather",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Forecast next 5 days": {
       "main": [
         [
@@ -490,17 +482,28 @@
           }
         ]
       ]
+    },
+    "every 3 hours": {
+      "main": [
+        [
+          {
+            "node": "Current Weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "11415d8c-63fa-4f4f-ad4e-161cad6680d6",
+  "versionId": "a760a6ff-225f-4046-8019-a2852b624629",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "36869f14530315c414f8ada486e9b84dad3fd46291e371985b3dd5eb1e82ece2"
+    "instanceId": "71afbebe005cd24e589f468ffe2b07b40b64968cc391637a9151ab21065e348b"
   },
-  "id": "iwVbPCJARkvJ4NQn",
+  "id": "V2E6tQl5IDGqwZyO",
   "tags": []
 }
